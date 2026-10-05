@@ -1,0 +1,8 @@
+{
+  "name": "y-mbt-yjs-fixtures",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "yjs": "13.6.32"
+  }
+}

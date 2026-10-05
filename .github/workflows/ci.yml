@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  moonbit:
+    name: MoonBit (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [native, js, wasm-gc]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install MoonBit
+        run: curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+
+      - name: Add MoonBit to PATH
+        run: echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      - name: Resolve MoonBit dependencies
+        run: moon update
+
+      - name: Check formatting
+        run: |
+          moon fmt --check
+          moon fmt --check scripts/yjs-fixtures.mbtx
+          moon fmt --check bench
+
+      - name: Check public interface snapshots
+        if: matrix.target == 'native'
+        run: |
+          moon info
+          moon info --target all
+          git diff --exit-code -- ':(glob)**/pkg.generated.mbti'
+
+      - name: Type check
+        run: moon check --target ${{ matrix.target }}
+
+      - name: Run tests
+        run: moon test --target ${{ matrix.target }}
+
+      - name: Run collaboration example
+        run: moon run --target ${{ matrix.target }} examples
+
+      - name: Run benchmark smoke suite
+        run: moon bench --target ${{ matrix.target }} bench/measure
+
+      - name: Sample setup-excluded local edit latency
+        run: moon run --target ${{ matrix.target }} bench/local_latency
+
+      - name: Set up Node.js for heap probe
+        if: matrix.target == 'js'
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Sample retained JavaScript heap around compaction
+        if: matrix.target == 'js'
+        run: moon run bench/memory-js.mbtx
+
+  yjs-fixtures:
+    name: Upstream Yjs fixture drift
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install MoonBit
+        run: curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+
+      - name: Add MoonBit to PATH
+        run: echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Resolve MoonBit dependencies
+        run: moon update
+
+      - name: Install pinned Yjs fixture dependency
+        run: npm ci --prefix compat/yjs
+
+      - name: Evaluate pinned Yjs struct-store candidate
+        run: moon run --target js bench/yjs
+
+      - name: Compare generated and checked-in fixtures
+        run: moon run --target js scripts/yjs-fixtures.mbtx --check
+
+      - name: Verify fixture drift checks reject each stale copy
+        run: moon run bench/check-fixture-drift.mbtx

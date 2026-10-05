@@ -1,0 +1,5 @@
+import {
+  "f4ah6o/y",
+}
+
+pkgtype(kind: "executable")

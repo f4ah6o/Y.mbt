@@ -1,0 +1,95 @@
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/shell",
+  "moonbitlang/core/encoding/utf8" @utf8,
+}
+
+///|
+async fn read_project_file(path : String) -> String {
+  let size = @fs.file_size(path).to_int()
+  let file = @fs.open(path, mode=@fs.ReadOnly)
+  let contents = file.read_exactly(size)
+  file.close()
+  @utf8.decode(contents)
+}
+
+///|
+async fn write_project_file(path : String, contents : String) -> Unit {
+  @fs.write_file(path, contents)
+}
+
+///|
+async fn run_fixture_checker() -> @shell.Output? {
+  try {
+    Some(
+      @shell.Cmd(
+        "moon",
+        ["run", "--target", "js", "scripts/yjs-fixtures.mbtx", "--check"],
+      ).output(),
+    )
+  } catch {
+    _ => None
+  }
+}
+
+///|
+async fn expect_fixture_rejection(
+  path : String,
+  original : String,
+  mutation : String,
+  label : String,
+) -> Unit {
+  if mutation == original {
+    abort("fixture drift mutation did not change " + label)
+  }
+  write_project_file(path, mutation)
+  let result = run_fixture_checker()
+  // Restore before evaluating the failure so every assertion leaves the tree
+  // clean when the script exits normally.
+  write_project_file(path, original)
+  match result {
+    None => abort("fixture checker process could not be run for " + label)
+    Some(output) => {
+      if output.exit_code() == 0 {
+        println(output.stdout() + output.stderr())
+        abort("fixture drift check failed to reject " + label)
+      }
+      println("isolated fixture drift rejection verified: " + label)
+    }
+  }
+}
+
+///|
+async fn main {
+  let fixture_path = "compat/yjs/fixtures.jsonl"
+  let test_path = "compatibility_test.mbt"
+  let fixture_source = read_project_file(fixture_path)
+  let test_source = read_project_file(test_path)
+  let baseline_result = run_fixture_checker()
+  match baseline_result {
+    None => abort("fixture checker process could not be run with clean copies")
+    Some(output) =>
+      if output.exit_code() != 0 {
+        println(output.stdout() + output.stderr())
+        abort("fixture checker rejected the clean checked-in copies")
+      }
+  }
+  let changed_fixture = fixture_source + "\nintentional-fixture-drift\n"
+  let changed_test = test_source.replace(
+    old="\"scenario\":\"map-basic\"",
+    new="\"scenario\":\"map-basic-intentional-drift\"",
+  )
+  expect_fixture_rejection(
+    fixture_path,
+    fixture_source,
+    changed_fixture,
+    "checked-in JSONL fixture",
+  )
+  expect_fixture_rejection(
+    test_path,
+    test_source,
+    changed_test,
+    "embedded test fixture",
+  )
+}

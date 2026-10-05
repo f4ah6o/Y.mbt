@@ -1,0 +1,146 @@
+///|
+import {
+  "moonbitlang/core/env",
+}
+
+///|
+extern "js" fn yjs_fixtures() -> String =
+  #|() => {
+  #|  const { createRequire } = process.getBuiltinModule("module")
+  #|  const requireFromFixturePackage = createRequire(
+  #|    process.cwd() + "/compat/yjs/package.json",
+  #|  )
+  #|  const Y = requireFromFixturePackage("yjs")
+  #|
+  #|  const mapDoc = new Y.Doc()
+  #|  const map = mapDoc.getMap("root")
+  #|  map.set("status", "draft")
+  #|  map.set("status", "published")
+  #|  map.set("obsolete", true)
+  #|  map.delete("obsolete")
+  #|  const mapFixture = {
+  #|    format: 1,
+  #|    upstream: { package: "yjs", version: "13.6.32" },
+  #|    scenario: "map-basic",
+  #|    operations: [
+  #|      { type: "map-set", key: "status", value: "draft" },
+  #|      { type: "map-set", key: "status", value: "published" },
+  #|      { type: "map-set", key: "obsolete", value: true },
+  #|      { type: "map-delete", key: "obsolete" },
+  #|    ],
+  #|    expected: { map: map.toJSON() },
+  #|  }
+  #|
+  #|  const arrayDoc = new Y.Doc()
+  #|  const array = arrayDoc.getArray("root")
+  #|  array.insert(0, ["first", "second"])
+  #|  array.insert(1, ["middle"])
+  #|  array.delete(0, 1)
+  #|  const arrayFixture = {
+  #|    format: 1,
+  #|    upstream: { package: "yjs", version: "13.6.32" },
+  #|    scenario: "array-basic",
+  #|    operations: [
+  #|      { type: "array-insert", index: 0, values: ["first", "second"] },
+  #|      { type: "array-insert", index: 1, values: ["middle"] },
+  #|      { type: "array-delete", index: 0, length: 1 },
+  #|    ],
+  #|    expected: { array: array.toJSON() },
+  #|  }
+  #|
+  #|  const textDoc = new Y.Doc()
+  #|  const text = textDoc.getText("root")
+  #|  text.insert(0, "A😀B")
+  #|  text.insert(1, "🙂")
+  #|  text.delete(5, 1)
+  #|  const textFixture = {
+  #|    format: 1,
+  #|    upstream: { package: "yjs", version: "13.6.32" },
+  #|    scenario: "text-unicode-boundary",
+  #|    indexUnit: "utf16-code-unit",
+  #|    operations: [
+  #|      { type: "text-insert", index: 0, text: "A😀B" },
+  #|      { type: "text-insert", index: 1, text: "🙂" },
+  #|      { type: "text-delete", index: 5, length: 1 },
+  #|    ],
+  #|    nativeScalarOperations: [
+  #|      { type: "text-insert", index: 0, text: "A😀B" },
+  #|      { type: "text-insert", index: 1, text: "🙂" },
+  #|      { type: "text-delete", index: 3, length: 1 },
+  #|    ],
+  #|    nativeIndexUnit: "unicode-scalar",
+  #|    indexProjections: [
+  #|      {
+  #|        context: "before B in A🙂😀B",
+  #|        yjsUtf16Index: 5,
+  #|        nativeScalarIndex: 3,
+  #|      },
+  #|    ],
+  #|    expected: { text: text.toString() },
+  #|  }
+  #|
+  #|  return [mapFixture, arrayFixture, textFixture]
+  #|    .map((fixture) => JSON.stringify(fixture))
+  #|    .join("\n")
+  #|}
+
+///|
+extern "js" fn read_project_file(path : String) -> String =
+  #|(path) => process.getBuiltinModule("fs").readFileSync(path, "utf8")
+
+///|
+fn embedded_fixture_source(fixtures : String) -> String {
+  let source = StringBuilder()
+  source.write_string("///|\n")
+  source.write_string(
+    "// Generated from upstream Yjs by scripts/yjs-fixtures.mbtx.\n",
+  )
+  source.write_string("const YJS_FIXTURE_JSONL : String =\n")
+  for line in fixtures.split("\n") {
+    if !line.is_empty() {
+      source.write_string("  #|")
+      source.write_string(line.to_owned())
+      source.write_char('\n')
+    }
+  }
+  source.write_string("// End generated Yjs fixture data.\n")
+  source.to_string()
+}
+
+///|
+fn check_fixture_copies(fixtures : String) -> Unit raise {
+  let checked_in_fixtures = read_project_file("compat/yjs/fixtures.jsonl")
+  if checked_in_fixtures != "\{fixtures}\n" {
+    fail("compat/yjs/fixtures.jsonl is out of date; regenerate it from Yjs")
+  }
+  let test_source = read_project_file("compatibility_test.mbt")
+  let embedded = embedded_fixture_source(fixtures)
+  if !test_source.contains(embedded) {
+    fail(
+      "compatibility_test.mbt fixture data is out of date; refresh its generated block",
+    )
+  }
+  println("upstream fixture data and embedded black-box data match")
+}
+
+///|
+fn main raise {
+  let fixtures = yjs_fixtures()
+  let args = @env.args()
+  let mut moonbit_mode = false
+  let mut check_mode = false
+  for arg in args {
+    if arg == "--moonbit" {
+      moonbit_mode = true
+    } else if arg == "--check" {
+      check_mode = true
+    }
+  }
+  if moonbit_mode {
+    println(embedded_fixture_source(fixtures))
+  } else if check_mode {
+    check_fixture_copies(fixtures)
+  } else {
+    println(fixtures)
+  }
+}

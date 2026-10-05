@@ -1,0 +1,196 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "f4ah6o/y"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+
+// Errors
+pub(all) suberror CrdtError {
+  InvalidReplicaId
+  InvalidEventCounter
+  ClockOverflow
+  InvalidEvent
+  InvalidDependency
+  ConflictingDuplicate
+  MissingAnchor
+  AnchorTypeMismatch
+  PendingLimit
+  EventLimit
+  InvalidIndex
+  InvalidRange
+  InvalidValueDepth
+  InvalidUnicode
+  UnsupportedVersion
+  MalformedUpdate
+  UpdateTooLarge
+  PeerBehindCheckpoint
+  CheckpointConflict
+  CannotCompactPending
+  InvalidAcknowledgement
+  StalePosition
+  ObserverNotFound
+  UndoUnavailable
+} derive(Eq, @debug.Debug)
+
+// Types and methods
+pub(all) enum AdapterError {
+  StorageFailure(String)
+  CrdtFailure(CrdtError)
+} derive(@debug.Debug)
+
+pub(all) enum Affinity {
+  Before
+  After
+} derive(Eq, @debug.Debug)
+
+pub(all) enum Change {
+  MapChanged(String, String, Value?, Value?)
+  SequenceChanged(String, SequenceKind, Array[Value], Array[Value])
+} derive(Eq, @debug.Debug)
+
+type ChangeSet
+pub fn ChangeSet::changes(Self) -> Array[Change]
+pub fn ChangeSet::event_ids(Self) -> Array[EventId]
+pub fn ChangeSet::is_empty(Self) -> Bool
+
+type CheckpointSnapshot
+pub fn CheckpointSnapshot::frontier(Self) -> StateVector
+pub fn CheckpointSnapshot::id(Self) -> String
+pub fn CheckpointSnapshot::maps(Self) -> Array[MapSnapshotEntry]
+pub fn CheckpointSnapshot::new(String, StateVector, Array[MapSnapshotEntry], Array[SequenceSnapshot]) -> Result[Self, CrdtError]
+pub fn CheckpointSnapshot::sequences(Self) -> Array[SequenceSnapshot]
+
+type Document
+pub fn Document::acknowledge_peer(Self, String, StateVector) -> Result[Unit, CrdtError]
+pub fn Document::apply_events(Self, Array[Event]) -> Result[ChangeSet, CrdtError]
+pub fn Document::apply_sync_update(Self, Bytes) -> Result[ChangeSet, CrdtError]
+pub fn Document::apply_update(Self, Update) -> Result[ChangeSet, CrdtError]
+pub fn Document::compact(Self, String) -> Result[CheckpointSnapshot, CrdtError]
+pub fn Document::discard_pending(Self, EventId) -> Bool
+pub fn Document::discard_rejected(Self, EventId) -> Bool
+pub fn Document::event_counts(Self) -> (Int, Int)
+pub fn Document::events(Self) -> Array[Event]
+pub fn Document::expire_peer(Self, String) -> Bool
+pub fn Document::full_update(Self) -> Result[Update, CrdtError]
+pub fn Document::list_delete(Self, String, Int, Int) -> Result[ChangeSet, CrdtError]
+pub fn Document::list_insert(Self, String, Int, Array[Value]) -> Result[ChangeSet, CrdtError]
+pub fn Document::list_values(Self, String) -> Array[Value]
+pub fn Document::map_delete(Self, String, String) -> Result[ChangeSet, CrdtError]
+pub fn Document::map_get(Self, String, String) -> Value?
+pub fn Document::map_set(Self, String, String, Value) -> Result[ChangeSet, CrdtError]
+pub fn Document::map_snapshot(Self, String) -> Map[String, Value]
+pub fn Document::new(String) -> Result[Self, CrdtError]
+pub fn Document::observe(Self, (ChangeSet) -> Unit) -> Int
+pub fn Document::pending_events(Self) -> Array[Event]
+pub fn Document::persist(Self, PersistenceAdapter) -> Result[Unit, AdapterError]
+pub fn Document::position_at(Self, String, SequenceKind, Int, Affinity) -> Result[RelativePosition, CrdtError]
+pub fn Document::redo(Self) -> Result[ChangeSet, CrdtError]
+pub fn Document::rejected_events(Self) -> Array[(EventId, CrdtError)]
+pub fn Document::replica(Self) -> String
+pub fn Document::resolve_position(Self, RelativePosition) -> Result[Int, CrdtError]
+pub fn Document::restore(String, PersistenceAdapter) -> Result[Self, AdapterError]
+pub fn Document::retry_pending(Self) -> Result[ChangeSet, CrdtError]
+pub fn Document::state_vector(Self) -> StateVector
+pub fn Document::storage_counts(Self) -> (Int, Int, Int, Int)
+pub fn Document::sync_update(Self, StateVector) -> Result[Bytes, CrdtError]
+pub fn Document::text(Self, String) -> String
+pub fn Document::text_delete(Self, String, Int, Int) -> Result[ChangeSet, CrdtError]
+pub fn Document::text_insert(Self, String, Int, String) -> Result[ChangeSet, CrdtError]
+pub fn Document::track_peer(Self, String, StateVector) -> Result[Unit, CrdtError]
+pub fn Document::transact(Self, Array[Edit]) -> Result[ChangeSet, CrdtError]
+pub fn Document::undo(Self) -> Result[ChangeSet, CrdtError]
+pub fn Document::unobserve(Self, Int) -> Bool
+pub fn Document::update_since(Self, StateVector) -> Result[Update, CrdtError]
+
+pub(all) enum Edit {
+  MapSet(String, String, Value)
+  MapDelete(String, String)
+  ListInsert(String, Int, Array[Value])
+  ListDelete(String, Int, Int)
+  TextInsert(String, Int, String)
+  TextDelete(String, Int, Int)
+} derive(Eq)
+
+type Event derive(Eq, @debug.Debug)
+pub fn Event::dependencies(Self) -> StateVector
+pub fn Event::id(Self) -> EventId
+pub fn Event::lamport(Self) -> Int
+pub fn Event::new(EventId, StateVector, Operation) -> Result[Self, CrdtError]
+pub fn Event::operation(Self) -> Operation
+
+type EventId derive(Compare, Eq, Hash, @debug.Debug)
+pub fn EventId::counter(Self) -> Int
+pub fn EventId::new(String, Int) -> Result[Self, CrdtError]
+pub fn EventId::replica(Self) -> String
+
+type MapSnapshotEntry
+pub fn MapSnapshotEntry::key(Self) -> String
+pub fn MapSnapshotEntry::lamport(Self) -> Int
+pub fn MapSnapshotEntry::new(String, String, Value?, EventId, Int) -> Result[Self, CrdtError]
+pub fn MapSnapshotEntry::root(Self) -> String
+pub fn MapSnapshotEntry::stamp(Self) -> EventId
+pub fn MapSnapshotEntry::value(Self) -> Value?
+
+pub(all) enum NodeId {
+  Root
+  CheckpointNode(String, String, SequenceKind, Int)
+  EventNode(EventId)
+} derive(Compare, Eq, Hash, @debug.Debug)
+
+pub(all) enum Operation {
+  MapSet(String, String, Value)
+  MapDelete(String, String)
+  SequenceInsert(String, SequenceKind, NodeId, Value)
+  SequenceDelete(String, SequenceKind, NodeId)
+  MapRestore(String, String, EventId, Value?)
+} derive(Eq, @debug.Debug)
+
+type PersistenceAdapter
+pub fn PersistenceAdapter::new(() -> Result[Bytes?, String], (Bytes) -> Result[Unit, String]) -> Self
+
+type RelativePosition derive(Eq, @debug.Debug)
+
+pub(all) enum SequenceKind {
+  List
+  Text
+} derive(Compare, Eq, Hash, @debug.Debug)
+
+type SequenceSnapshot
+pub fn SequenceSnapshot::kind(Self) -> SequenceKind
+pub fn SequenceSnapshot::new(String, SequenceKind, Array[Value]) -> Result[Self, CrdtError]
+pub fn SequenceSnapshot::root(Self) -> String
+pub fn SequenceSnapshot::values(Self) -> Array[Value]
+
+type StateVector derive(Eq, @debug.Debug)
+pub fn StateVector::checkpoint(Self) -> String?
+pub fn StateVector::counter(Self, String) -> Int
+pub fn StateVector::dominates(Self, Self) -> Bool
+pub fn StateVector::entries(Self) -> Array[(String, Int)]
+pub fn StateVector::from_metadata(Array[(String, Int, Int)], String?) -> Result[Self, CrdtError]
+pub fn StateVector::includes(Self, EventId) -> Bool
+pub fn StateVector::lamport(Self, String) -> Int
+pub fn StateVector::metadata_entries(Self) -> Array[(String, Int, Int)]
+pub fn StateVector::new() -> Self
+
+type Update
+pub fn Update::checkpoint(Self) -> CheckpointSnapshot?
+pub fn Update::decode(Bytes) -> Result[Self, CrdtError]
+pub fn Update::encode(Self) -> Result[Bytes, CrdtError]
+pub fn Update::events(Self) -> Array[Event]
+pub fn Update::new(CheckpointSnapshot?, Array[Event]) -> Result[Self, CrdtError]
+
+pub(all) enum Value {
+  Null
+  Bool(Bool)
+  Int(Int)
+  String(String)
+  Array(Array[Value])
+  Object(Map[String, Value])
+} derive(Eq, @debug.Debug)
+
+// Type aliases
+
+// Traits

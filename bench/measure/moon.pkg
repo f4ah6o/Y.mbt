@@ -1,0 +1,5 @@
+import {
+  "f4ah6o/y",
+  "f4ah6o/y/bench/workload",
+  "moonbitlang/core/bench",
+} for "wbtest"

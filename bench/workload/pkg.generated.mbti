@@ -1,0 +1,34 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "f4ah6o/y/bench/workload"
+
+// Values
+pub fn offline_branch_scenario(Int, Int) -> Scenario
+
+// Errors
+
+// Types and methods
+pub(all) enum Edit {
+  TextInsert(Int, String)
+  TextDelete(Int, Int)
+  ListInsert(Int, Array[Int])
+  MapSet(String, JsonValue)
+  MapDelete(String)
+}
+
+pub(all) enum JsonValue {
+  Text(String)
+  Number(Int)
+}
+
+pub(all) struct Scenario {
+  seed : Array[Edit]
+  left : Array[Edit]
+  right : Array[Edit]
+  seed_size : Int
+  edits_per_branch : Int
+}
+pub fn Scenario::to_json(Self) -> String
+
+// Type aliases
+
+// Traits

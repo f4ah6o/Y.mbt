@@ -1,0 +1,26 @@
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/shell",
+}
+
+async fn main {
+  let build = @shell.Cmd(
+    "moon",
+    ["build", "--quiet", "--target", "js", "bench/memory"],
+  )
+    .output()
+  if build.exit_code() != 0 {
+    println(build.stdout())
+    println(build.stderr())
+    abort("failed to build JavaScript heap probe")
+  }
+  let measurement = @shell.Cmd(
+    "node",
+    ["--expose-gc", "_build/js/debug/build/bench/memory/memory.js"],
+  ).output()
+  println(measurement.stdout())
+  println(measurement.stderr())
+  if measurement.exit_code() != 0 {
+    abort("JavaScript retained heap probe failed")
+  }
+}

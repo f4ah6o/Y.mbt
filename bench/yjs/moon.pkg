@@ -1,0 +1,6 @@
+import {
+  "f4ah6o/y",
+  "f4ah6o/y/bench/workload",
+}
+
+pkgtype(kind: "executable")
