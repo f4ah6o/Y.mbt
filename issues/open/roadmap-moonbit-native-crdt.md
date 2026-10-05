@@ -1,0 +1,147 @@
+# Roadmap: MoonBit-native CRDT architecture and staged Yjs interoperability
+
+## Goal
+
+Design Y.mbt as an idiomatic MoonBit local-first collaboration library inspired by Yjs, without requiring algorithm-level fidelity to Yjs.
+
+Compatibility must be explicit rather than accidental: preserve Yjs interoperability only where it creates concrete value, while allowing the CRDT core, internal representation, APIs, error model, and module boundaries to be MoonBit-native.
+
+## Design principles
+
+- **Correctness before API breadth.** Convergence, determinism, idempotence, causal consistency, and round-trip encoding are release gates.
+- **MoonBit-native core.** Prefer explicit `enum`/`struct` domain types, pattern matching, narrow package APIs, typed errors, and testable transformations over JavaScript-shaped internals.
+- **Compatibility is layered.** Semantic, API, and wire compatibility are separate decisions. The CRDT core must not depend on the Yjs wire format.
+- **Algorithm freedom.** Evaluate Yjs-style struct stores alongside modern event-graph / Eg-walker-inspired approaches; choose from correctness evidence and benchmarks rather than port fidelity.
+- **Local-first by construction.** Offline edits, deterministic replay, incremental sync, and compact persistence are first-class requirements.
+- **Observable invariants.** Every phase adds property/model tests before expanding the public API.
+
+## Proposed architecture
+
+```text
+src/
+  core/          # IDs, clocks, causal metadata, operations/events, invariants
+  store/         # document/event storage and indexing
+  sequence/      # text/list integration algorithm
+  types/         # Map, Array/List, Text and shared-value model
+  transaction/   # mutation boundary, change sets, observer events
+  sync/          # state vectors/frontiers, diff calculation, update application
+  codec/         # MoonBit-native binary format
+  compat/yjs/    # optional Yjs wire/API compatibility
+  gc/            # compaction/tombstone policy
+```
+
+The core exposes semantic operations and state transitions; codecs, persistence, awareness, and transports remain replaceable boundaries.
+
+## Phase 0 — Specification and invariants
+
+- [ ] Write the compatibility matrix: semantic, API, and wire compatibility are separate decisions.
+- [ ] Define `ReplicaId`, logical/event IDs, causal frontier/state vector, operation/event types, and document value types.
+- [ ] Document invariants: unique IDs, dependency closure, deterministic integration, idempotent apply, convergence.
+- [ ] Add a deterministic two-/three-replica simulation harness.
+- [ ] Establish `moon check`, `moon test`, formatting, and documentation checks.
+
+**Exit:** randomized delivery orders converge to the same canonical document state.
+
+## Phase 1 — Minimal CRDT kernel
+
+- [ ] Implement logical event representation plus indexed storage.
+- [ ] Implement local event creation and remote event application.
+- [ ] Implement causal dependency tracking and duplicate suppression.
+- [ ] Implement deterministic merge/integration.
+- [ ] Add property tests for permutation, duplication, batching, and offline reconnection.
+
+**Exit:** replicas converge under reordered and duplicated delivery without relying on network ordering.
+
+## Phase 2 — Sequence/Text
+
+- [ ] Build the first sequence CRDT for text/list editing.
+- [ ] Evaluate Yjs-like struct integration and event-graph/Eg-walker-inspired replay/materialization.
+- [ ] Define cursor/relative-position semantics independently from storage layout.
+- [ ] Cover concurrent insert/delete, long offline branches, Unicode, and large documents.
+- [ ] Benchmark edit latency, merge latency, memory/element, metadata growth, and cold-load materialization.
+
+**Exit:** algorithm choice is recorded with benchmark/correctness evidence.
+
+## Phase 3 — Shared data model and transactions
+
+- [ ] Add shared Map and Array/List; Text may specialize sequence behavior.
+- [ ] Define recursive `Value` safely and explicitly.
+- [ ] Add transaction boundaries and deterministic change sets.
+- [ ] Add observer/event APIs that do not leak internal storage representation.
+- [ ] Specify nested shared-type lifecycle and ownership.
+
+**Exit:** common collaborative document structures can be mutated atomically and observed deterministically.
+
+## Phase 4 — Incremental synchronization
+
+- [ ] Implement causal frontier/state-vector exchange.
+- [ ] Compute minimal missing event/update sets.
+- [ ] Make update application idempotent and order-independent.
+- [ ] Add native binary encoding with versioning and malformed-input errors.
+- [ ] Test full-state sync vs incremental sync and multi-hop propagation.
+
+**Exit:** a fresh or stale replica synchronizes without replaying unrelated history.
+
+## Phase 5 — Yjs interoperability boundary
+
+- [ ] Decide exact compatibility tier from the Phase 0 matrix.
+- [ ] Implement Yjs update/state-vector codecs only if wire interoperability remains required.
+- [ ] Add differential fixtures generated by upstream Yjs.
+- [ ] Keep Yjs naming/API shims in `compat/yjs`, not in the native core.
+- [ ] Document unsupported Yjs behavior explicitly.
+
+**Exit:** supported compatibility claims are fixture-tested against upstream Yjs.
+
+## Phase 6 — Compaction / GC
+
+- [ ] Define retention requirements for deletes, history, relative positions, and late replicas.
+- [ ] Implement safe compaction checkpoints.
+- [ ] Separate logical history from materialized document state.
+- [ ] Test reconnect-after-compaction and adversarial long-offline cases.
+- [ ] Benchmark metadata growth over long edit histories.
+
+**Exit:** storage growth can be bounded under a documented synchronization/retention policy.
+
+## Phase 7 — Production surface
+
+- [ ] Undo/redo based on semantic transactions, not raw storage mutation.
+- [ ] Persistence adapter interface.
+- [ ] Provider-neutral sync protocol hooks; awareness/presence stays outside durable CRDT state.
+- [ ] Fuzz/property/model tests in CI.
+- [ ] Cross-target benchmarks for relevant MoonBit backends.
+- [ ] API docs and runnable collaboration examples.
+
+**Exit:** stable native API with explicit compatibility guarantees and reproducible performance/correctness tests.
+
+## Algorithm decision gate
+
+Do **not** commit Y.mbt to Yjs internals before Phase 2. Compare:
+
+1. **Yjs-compatible internals** — shortest path to wire compatibility, but imports Yjs/JavaScript representation constraints.
+2. **MoonBit-native event graph / Eg-walker-inspired core** — cleaner separation of history and materialized state and a stronger fit for typed domain modeling, but requires compatibility adapters.
+3. **Hybrid** — MoonBit-native semantic/event core plus optional Yjs codec/index structures at the boundary.
+
+Current default direction: **hybrid**, subject to Phase 2 measurements.
+
+## Required correctness tests
+
+- Same operations under every tested valid delivery permutation => same canonical state.
+- Duplicate update application => no semantic change.
+- Batched vs individual application => same state.
+- Offline branch merge => convergence.
+- Encode/decode => semantic round trip.
+- Native incremental sync => same state as full sync.
+- If Yjs compatibility is enabled: Yjs -> Y.mbt -> Yjs fixture round trips for every supported feature.
+- Malformed/truncated/untrusted binary input => typed failure, no partial corruption.
+
+## Benchmark dimensions
+
+Track document size and history size independently. At minimum measure local insert/delete, remote integration, long concurrent branches, state-vector/frontier calculation, diff encoding, cold materialization, memory growth, and compaction.
+
+## Initial non-goals
+
+- Provider/network implementation.
+- Awareness/presence in durable CRDT state.
+- Exact JavaScript API emulation.
+- Yjs algorithm fidelity for its own sake.
+- Premature optimization before invariant/property tests exist.
