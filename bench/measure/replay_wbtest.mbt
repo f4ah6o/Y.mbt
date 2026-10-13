@@ -5,7 +5,7 @@
 /// then walks the graph to produce visible values.
 priv struct ReplayNode {
   after : @y.NodeId
-  lamport : Int
+  lamport : Int32
   value : @y.Value
   mut deleted : Bool
 }
@@ -13,7 +13,7 @@ priv struct ReplayNode {
 ///|
 priv struct ReplayVersion {
   stamp : @y.EventId
-  lamport : Int
+  lamport : Int32
   value : @y.Value?
   dependencies : @y.StateVector
   is_restore : Bool
@@ -24,11 +24,11 @@ priv struct ReplayProjection {
   maps : Map[String, Map[String, @y.Value]]
   lists : Map[String, Array[@y.Value]]
   texts : Map[String, String]
-  event_count : Int
-  sequence_node_count : Int
-  tombstone_count : Int
-  map_version_count : Int
-  replica_count : Int
+  event_count : Int32
+  sequence_node_count : Int32
+  tombstone_count : Int32
+  map_version_count : Int32
+  replica_count : Int32
 }
 
 ///|
@@ -37,10 +37,10 @@ priv struct ReplayCandidate {
   lists : Map[String, Map[@y.NodeId, ReplayNode]]
   texts : Map[String, Map[@y.NodeId, ReplayNode]]
   seen : Map[@y.EventId, @y.Event]
-  vector : Map[String, Int]
-  mut sequence_node_count : Int
-  mut tombstone_count : Int
-  mut map_version_count : Int
+  vector : Map[String, Int32]
+  mut sequence_node_count : Int32
+  mut tombstone_count : Int32
+  mut map_version_count : Int32
 }
 
 ///|
@@ -294,7 +294,7 @@ fn replay_version_wins(
 }
 
 ///|
-fn replay_compare_event_ids(left : @y.EventId, right : @y.EventId) -> Int {
+fn replay_compare_event_ids(left : @y.EventId, right : @y.EventId) -> Int32 {
   let replica_order = left.replica().compare(right.replica())
   if replica_order != 0 {
     replica_order

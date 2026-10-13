@@ -1,7 +1,7 @@
 ///|
 priv struct MapRegister {
   stamp : EventId
-  lamport : Int
+  lamport : Int32
   value : Value?
 }
 
@@ -9,7 +9,7 @@ priv struct MapRegister {
 priv struct SequenceNode {
   id : NodeId
   after : NodeId
-  lamport : Int
+  lamport : Int32
   value : Value
   deleted : Bool
 }
@@ -31,7 +31,7 @@ priv struct Checkpoint {
 ///|
 priv struct MapVersion {
   stamp : EventId
-  lamport : Int
+  lamport : Int32
   value : Value?
   dependencies : StateVector?
   is_restore : Bool
@@ -39,7 +39,7 @@ priv struct MapVersion {
 
 ///|
 priv struct Observer {
-  id : Int
+  id : Int32
   callback : (ChangeSet) -> Unit
 }
 
@@ -48,8 +48,8 @@ priv struct Observer {
 /// methods; all returned mutable values are recursively copied.
 struct Document {
   replica : String
-  mut clock : Map[String, Int]
-  mut lamports : Map[String, Int]
+  mut clock : Map[String, Int32]
+  mut lamports : Map[String, Int32]
   mut maps : Map[String, Map[String, MapRegister]]
   mut lists : Map[String, SequenceState]
   mut texts : Map[String, SequenceState]
@@ -62,7 +62,7 @@ struct Document {
   mut redo : Array[UndoRecord]
   mut peer_acks : Map[String, StateVector]
   observers : Array[Observer]
-  mut next_observer_id : Int
+  mut next_observer_id : Int32
   mut notifying_observers : Bool
   notification_queue : Array[ChangeSet]
 }

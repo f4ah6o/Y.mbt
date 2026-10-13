@@ -2,7 +2,7 @@
 /// A vector describes four independent replica-local event prefixes. Zero
 /// means absent metadata; positive counters have matching valid Lamport times.
 /// No event delivery, checkpoint compatibility, or convergence is assumed here.
-fn bounded_vector(counts : Array[Int]) -> @y.StateVector {
+fn bounded_vector(counts : Array[Int32]) -> @y.StateVector {
   let entries = []
   for replica in 0..<counts.length() {
     if counts[replica] > 0 {
@@ -16,7 +16,7 @@ fn bounded_vector(counts : Array[Int]) -> @y.StateVector {
 /// Independent model: enumerate actual (replica, event number) identities,
 /// then ask whether every required event appears in the available set. This
 /// does not call the library's counter/includes/dominates comparison helpers.
-fn represented_events(counts : Array[Int]) -> Array[(Int, Int)] {
+fn represented_events(counts : Array[Int32]) -> Array[(Int32, Int32)] {
   let events = []
   for replica in 0..<counts.length() {
     for counter in 1..<(counts[replica] + 1) {
@@ -27,7 +27,7 @@ fn represented_events(counts : Array[Int]) -> Array[(Int, Int)] {
 }
 
 ///|
-fn bounded_counts(bytes : Array[Byte]) -> Array[Int] {
+fn bounded_counts(bytes : Array[Byte]) -> Array[Int32] {
   Array::makei(4, replica => {
     if replica < bytes.length() {
       bytes[replica].to_int() % 9

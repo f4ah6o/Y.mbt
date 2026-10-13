@@ -51,8 +51,8 @@ priv struct UpdateWriter {
 ///|
 priv struct UpdateReader {
   bytes : Bytes
-  mut offset : Int
-  mut value_budget : Int
+  mut offset : Int32
+  mut value_budget : Int32
 }
 
 ///|
@@ -82,20 +82,23 @@ fn write_update(writer : UpdateWriter, update : Update) -> Unit raise CrdtError 
 }
 
 ///|
-fn writer_reserve(writer : UpdateWriter, amount : Int) -> Unit raise CrdtError {
+fn writer_reserve(
+  writer : UpdateWriter,
+  amount : Int32,
+) -> Unit raise CrdtError {
   if amount < 0 || writer.buffer.length() > MAX_UPDATE_BYTES - amount {
     raise UpdateTooLarge
   }
 }
 
 ///|
-fn writer_byte(writer : UpdateWriter, value : Int) -> Unit raise CrdtError {
+fn writer_byte(writer : UpdateWriter, value : Int32) -> Unit raise CrdtError {
   writer_reserve(writer, 1)
   writer.buffer.write_byte(value.to_byte())
 }
 
 ///|
-fn writer_int(writer : UpdateWriter, value : Int) -> Unit raise CrdtError {
+fn writer_int(writer : UpdateWriter, value : Int32) -> Unit raise CrdtError {
   writer_reserve(writer, 4)
   writer.buffer.write_int_be(value)
 }
@@ -183,7 +186,7 @@ fn writer_kind(
 fn writer_value(
   writer : UpdateWriter,
   value : Value,
-  depth : Int,
+  depth : Int32,
 ) -> Unit raise CrdtError {
   if depth > MAX_VALUE_DEPTH {
     raise InvalidValueDepth
@@ -341,14 +344,14 @@ fn write_checkpoint(
 }
 
 ///|
-fn reader_need(reader : UpdateReader, length : Int) -> Unit raise CrdtError {
+fn reader_need(reader : UpdateReader, length : Int32) -> Unit raise CrdtError {
   if length < 0 || reader.offset > reader.bytes.length() - length {
     raise MalformedUpdate
   }
 }
 
 ///|
-fn reader_byte(reader : UpdateReader) -> Int raise CrdtError {
+fn reader_byte(reader : UpdateReader) -> Int32 raise CrdtError {
   reader_need(reader, 1)
   let value = match reader.bytes.get(reader.offset) {
     Some(byte) => byte.to_int()
@@ -359,7 +362,7 @@ fn reader_byte(reader : UpdateReader) -> Int raise CrdtError {
 }
 
 ///|
-fn reader_int(reader : UpdateReader) -> Int raise CrdtError {
+fn reader_int(reader : UpdateReader) -> Int32 raise CrdtError {
   reader_need(reader, 4)
   let b0 = reader_byte(reader)
   let b1 = reader_byte(reader)
@@ -369,7 +372,10 @@ fn reader_int(reader : UpdateReader) -> Int raise CrdtError {
 }
 
 ///|
-fn reader_count(reader : UpdateReader, maximum : Int) -> Int raise CrdtError {
+fn reader_count(
+  reader : UpdateReader,
+  maximum : Int32,
+) -> Int32 raise CrdtError {
   let count = reader_int(reader)
   if count < 0 || count > maximum {
     raise if count < 0 { MalformedUpdate } else { UpdateTooLarge }
@@ -415,7 +421,7 @@ fn reader_event_id(reader : UpdateReader) -> EventId raise CrdtError {
 fn reader_vector(reader : UpdateReader) -> StateVector raise CrdtError {
   let checkpoint = reader_optional_string(reader)
   let count = reader_count(reader, MAX_UPDATE_CLOCKS)
-  let entries : Array[(String, Int, Int)] = []
+  let entries : Array[(String, Int32, Int32)] = []
   let mut previous : String? = None
   for _ in 0..<count {
     let replica = reader_string(reader)
@@ -463,7 +469,7 @@ fn reader_kind(reader : UpdateReader) -> SequenceKind raise CrdtError {
 }
 
 ///|
-fn reader_value(reader : UpdateReader, depth : Int) -> Value raise CrdtError {
+fn reader_value(reader : UpdateReader, depth : Int32) -> Value raise CrdtError {
   if depth > MAX_VALUE_DEPTH {
     raise InvalidValueDepth
   }

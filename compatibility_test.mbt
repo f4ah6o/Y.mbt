@@ -35,7 +35,7 @@ fn fixture_array(value : Json) -> Array[Json] raise {
 }
 
 ///|
-fn fixture_integer(value : Json) -> Int raise {
+fn fixture_integer(value : Json) -> Int32 raise {
   @json.from_json(value)
 }
 

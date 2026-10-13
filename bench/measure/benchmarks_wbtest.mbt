@@ -20,7 +20,7 @@ fn new_document(replica : String) -> @y.Document {
 }
 
 ///|
-fn repeat_scalar(scalar : Char, count : Int) -> String {
+fn repeat_scalar(scalar : Char, count : Int32) -> String {
   let output = StringBuilder()
   for _ in 0..<count {
     output.write_char(scalar)
@@ -29,7 +29,7 @@ fn repeat_scalar(scalar : Char, count : Int) -> String {
 }
 
 ///|
-fn compare_benchmark_event_ids(left : @y.EventId, right : @y.EventId) -> Int {
+fn compare_benchmark_event_ids(left : @y.EventId, right : @y.EventId) -> Int32 {
   let replica_order = left.replica().compare(right.replica())
   if replica_order != 0 {
     replica_order
@@ -45,7 +45,7 @@ fn compare_benchmark_event_ids(left : @y.EventId, right : @y.EventId) -> Int {
 ///|
 /// Produce a deterministic offline workload: two replicas start from the
 /// same seed, edit text and lists independently, and race on one map key.
-fn seed_events(seed_size : Int) -> Array[@y.Event] {
+fn seed_events(seed_size : Int32) -> Array[@y.Event] {
   let seed = new_document("seed")
   let scenario = @workload.offline_branch_scenario(seed_size, 1)
   apply_workload_edits(seed, scenario.seed)
@@ -54,8 +54,8 @@ fn seed_events(seed_size : Int) -> Array[@y.Event] {
 
 ///|
 fn long_offline_branch_events(
-  seed_size : Int,
-  edits_per_branch : Int,
+  seed_size : Int32,
+  edits_per_branch : Int32,
 ) -> Array[@y.Event] {
   let scenario = @workload.offline_branch_scenario(seed_size, edits_per_branch)
   let seed = new_document("seed")
@@ -182,7 +182,7 @@ test "bench fixed live document with growing map history" (it : @bench.T) {
 ///|
 fn benchmark_fixed_history_case(
   it : @bench.T,
-  repeated_same_value_edits : Int,
+  repeated_same_value_edits : Int32,
 ) -> Unit {
   let profiled = fixed_live_history_document(
     "history-profile", repeated_same_value_edits,
@@ -229,7 +229,7 @@ fn benchmark_fixed_history_case(
 ///|
 fn fixed_live_history_document(
   replica : String,
-  repeated_same_value_edits : Int,
+  repeated_same_value_edits : Int32,
 ) -> @y.Document {
   let document = new_document(replica)
   must_unit(document.text_insert("body", 0, repeat_scalar('x', 32)))
@@ -256,8 +256,8 @@ fn fixed_live_history_document(
 ///|
 fn benchmark_offline_case(
   it : @bench.T,
-  seed_size : Int,
-  edits_per_branch : Int,
+  seed_size : Int32,
+  edits_per_branch : Int32,
 ) -> Unit {
   let events = long_offline_branch_events(seed_size, edits_per_branch)
   let indexed = new_document("correctness")

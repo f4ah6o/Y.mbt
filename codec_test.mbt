@@ -1,7 +1,7 @@
 ///|
 fn codec_make_event(
   replica : String,
-  counter : Int,
+  counter : Int32,
   deps : @y.StateVector,
   operation : @y.Operation,
 ) -> @y.Event {
@@ -9,7 +9,7 @@ fn codec_make_event(
 }
 
 ///|
-fn codec_vector(counter : Int) -> @y.StateVector {
+fn codec_vector(counter : Int32) -> @y.StateVector {
   @y.StateVector::from_metadata([("source", counter, counter)], None).unwrap()
 }
 
@@ -70,7 +70,7 @@ fn write_raw_string(buffer : @buffer.Buffer, value : String) -> Unit {
 }
 
 ///|
-fn raw_nested_value_update(depth : Int) -> Bytes {
+fn raw_nested_value_update(depth : Int32) -> Bytes {
   let buffer = @buffer.Buffer()
   buffer.write_byte(b'Y')
   buffer.write_byte(b'M')
@@ -96,7 +96,10 @@ fn raw_nested_value_update(depth : Int) -> Bytes {
 }
 
 ///|
-fn find_single_byte_string(bytes : Array[Byte], character : Byte) -> Int raise {
+fn find_single_byte_string(
+  bytes : Array[Byte],
+  character : Byte,
+) -> Int32 raise {
   let mut result = -1
   for index in 0..<(bytes.length() - 4) {
     if bytes[index] == b'\x00' &&

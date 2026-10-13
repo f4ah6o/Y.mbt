@@ -200,7 +200,9 @@ pub fn Document::apply_update(
 ///|
 /// Report retained event, pending event, sequence-node, and map-register
 /// counts for diagnostics and reproducible memory-growth benchmarks.
-pub fn Document::storage_counts(self : Document) -> (Int, Int, Int, Int) {
+pub fn Document::storage_counts(
+  self : Document,
+) -> (Int32, Int32, Int32, Int32) {
   let mut sequence_nodes = 0
   for _, sequence in self.lists {
     sequence_nodes += sequence.nodes.length()

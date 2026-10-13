@@ -55,7 +55,7 @@ pub fn Document::state_vector(self : Document) -> StateVector {
 
 ///|
 /// Return the number of integrated and queued events.
-pub fn Document::event_counts(self : Document) -> (Int, Int) {
+pub fn Document::event_counts(self : Document) -> (Int32, Int32) {
   (self.integrated.length(), self.pending.length())
 }
 
@@ -410,7 +410,7 @@ fn is_quarantinable_deferred_error(error : CrdtError) -> Bool {
 ///|
 /// current pending queue. A genuinely absent predecessor remains queueable.
 fn reject_pending_cycles(document : Document) -> Result[Unit, CrdtError] {
-  let indegree : Map[EventId, Int] = {}
+  let indegree : Map[EventId, Int32] = {}
   let outgoing : Map[EventId, Array[EventId]] = {}
   for id, _ in document.pending {
     indegree[id] = 0
@@ -532,7 +532,11 @@ fn causal_vector_is_closed(document : Document, vector : StateVector) -> Bool {
 
 ///|
 /// Look up the exact Lamport timestamp for one contiguous replica counter.
-fn known_lamport(document : Document, replica : String, counter : Int) -> Int? {
+fn known_lamport(
+  document : Document,
+  replica : String,
+  counter : Int32,
+) -> Int32? {
   if counter == 0 {
     return Some(0)
   }
@@ -548,7 +552,7 @@ fn known_lamport(document : Document, replica : String, counter : Int) -> Int? {
 }
 
 ///|
-fn vector_sum(vector : StateVector) -> Int {
+fn vector_sum(vector : StateVector) -> Int32 {
   let mut sum = 0
   for _, counter in vector.clocks {
     sum += counter
@@ -732,7 +736,7 @@ fn validate_operation(
 }
 
 ///|
-fn validate_value(value : Value, depth : Int) -> Result[Unit, CrdtError] {
+fn validate_value(value : Value, depth : Int32) -> Result[Unit, CrdtError] {
   if depth > MAX_VALUE_DEPTH {
     return Err(InvalidValueDepth)
   }
@@ -759,7 +763,7 @@ fn validate_value(value : Value, depth : Int) -> Result[Unit, CrdtError] {
 ///|
 fn validate_value_option(
   value : Value?,
-  depth : Int,
+  depth : Int32,
 ) -> Result[Unit, CrdtError] {
   match value {
     None => Ok(())
@@ -961,10 +965,10 @@ fn sort_events(events : Array[Event]) -> Unit {
 }
 
 ///|
-const MAX_PENDING_EVENTS : Int = 100000
+const MAX_PENDING_EVENTS : Int32 = 100000
 
 ///|
-const MAX_RETAINED_EVENTS : Int = 1000000
+const MAX_RETAINED_EVENTS : Int32 = 1000000
 
 ///|
-const MAX_VALUE_DEPTH : Int = 128
+const MAX_VALUE_DEPTH : Int32 = 128

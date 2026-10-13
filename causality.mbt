@@ -1,8 +1,8 @@
 ///|
 /// A contiguous vector clock plus the checkpoint epoch carried by a peer.
 struct StateVector {
-  clocks : Map[String, Int]
-  lamports : Map[String, Int]
+  clocks : Map[String, Int32]
+  lamports : Map[String, Int32]
   checkpoint : String?
 } derive(Eq, Debug)
 
@@ -14,7 +14,7 @@ pub fn StateVector::new() -> StateVector {
 
 ///|
 /// Return the highest contiguous integrated counter for `replica`.
-pub fn StateVector::counter(self : StateVector, replica : String) -> Int {
+pub fn StateVector::counter(self : StateVector, replica : String) -> Int32 {
   self.clocks.get(replica).unwrap_or(0)
 }
 
@@ -26,7 +26,7 @@ pub fn StateVector::checkpoint(self : StateVector) -> String? {
 
 ///|
 /// Return a sorted copy of the vector entries.
-pub fn StateVector::entries(self : StateVector) -> Array[(String, Int)] {
+pub fn StateVector::entries(self : StateVector) -> Array[(String, Int32)] {
   let entries = self.clocks.to_array()
   entries.sort_by((left, right) => left.0.compare(right.0))
   entries
@@ -54,7 +54,7 @@ pub fn StateVector::dominates(self : StateVector, other : StateVector) -> Bool {
 struct Event {
   id : EventId
   dependencies : StateVector
-  lamport : Int
+  lamport : Int32
   operation : Operation
 } derive(Eq, Debug)
 
@@ -126,7 +126,7 @@ pub fn Event::dependencies(self : Event) -> StateVector {
 
 ///|
 /// Return the causality-preserving Lamport timestamp assigned to this event.
-pub fn Event::lamport(self : Event) -> Int {
+pub fn Event::lamport(self : Event) -> Int32 {
   self.lamport
 }
 
@@ -138,8 +138,8 @@ pub fn Event::operation(self : Event) -> Operation {
 
 ///|
 fn clone_vector(vector : StateVector) -> StateVector {
-  let clocks : Map[String, Int] = {}
-  let lamports : Map[String, Int] = {}
+  let clocks : Map[String, Int32] = {}
+  let lamports : Map[String, Int32] = {}
   for replica, counter in vector.clocks {
     clocks[replica] = counter
   }
@@ -177,7 +177,7 @@ fn vector_set_checkpoint(
 }
 
 ///|
-fn max_lamport(vector : StateVector) -> Int {
+fn max_lamport(vector : StateVector) -> Int32 {
   let mut maximum = 0
   for _, timestamp in vector.lamports {
     if timestamp > maximum {
@@ -188,8 +188,8 @@ fn max_lamport(vector : StateVector) -> Int {
 }
 
 ///|
-fn clone_clock_map(clocks : Map[String, Int]) -> Map[String, Int] {
-  let output : Map[String, Int] = {}
+fn clone_clock_map(clocks : Map[String, Int32]) -> Map[String, Int32] {
+  let output : Map[String, Int32] = {}
   for replica, counter in clocks {
     output[replica] = counter
   }
