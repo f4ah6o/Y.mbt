@@ -5,7 +5,7 @@
 pub(all) enum Value {
   Null
   Bool(Bool)
-  Int(Int)
+  Int(Int32)
   String(String)
   Array(Array[Value])
   Object(Map[String, Value])
@@ -34,14 +34,14 @@ fn Value::clone(value : Value) -> Value {
 /// A globally unique event identity. Counters are contiguous per replica.
 struct EventId {
   replica : String
-  counter : Int
+  counter : Int32
 } derive(Eq, Hash, Compare, Debug)
 
 ///|
 /// Construct an event identity after validating its replica and counter.
 pub fn EventId::new(
   replica : String,
-  counter : Int,
+  counter : Int32,
 ) -> Result[EventId, CrdtError] {
   if !utf16_is_well_formed(replica) {
     Err(InvalidUnicode)
@@ -68,7 +68,7 @@ pub fn EventId::replica(self : EventId) -> String {
 
 ///|
 /// Return the contiguous counter component of an event identity.
-pub fn EventId::counter(self : EventId) -> Int {
+pub fn EventId::counter(self : EventId) -> Int32 {
   self.counter
 }
 
@@ -76,7 +76,7 @@ pub fn EventId::counter(self : EventId) -> Int {
 /// A node identity used by relative positions and RGA sequence links.
 pub(all) enum NodeId {
   Root
-  CheckpointNode(String, String, SequenceKind, Int)
+  CheckpointNode(String, String, SequenceKind, Int32)
   EventNode(EventId)
 } derive(Eq, Hash, Compare, Debug)
 

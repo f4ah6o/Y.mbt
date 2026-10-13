@@ -5,7 +5,7 @@ struct MapSnapshotEntry {
   key : String
   value : Value?
   stamp : EventId
-  lamport : Int
+  lamport : Int32
 }
 
 ///|
@@ -15,7 +15,7 @@ pub fn MapSnapshotEntry::new(
   key : String,
   value : Value?,
   stamp : EventId,
-  lamport : Int,
+  lamport : Int32,
 ) -> Result[MapSnapshotEntry, CrdtError] {
   if root.is_empty() || lamport <= 0 {
     return Err(MalformedUpdate)
@@ -69,7 +69,7 @@ pub fn MapSnapshotEntry::stamp(self : MapSnapshotEntry) -> EventId {
 
 ///|
 /// Return the Lamport timestamp of the event which last changed this key.
-pub fn MapSnapshotEntry::lamport(self : MapSnapshotEntry) -> Int {
+pub fn MapSnapshotEntry::lamport(self : MapSnapshotEntry) -> Int32 {
   self.lamport
 }
 
@@ -329,7 +329,7 @@ pub fn Update::new(
 /// budget; this second pass enforces the update-wide wire limit.
 fn consume_checkpoint_value_budget(
   checkpoint : CheckpointSnapshot,
-  budget : Array[Int],
+  budget : Array[Int32],
 ) -> Result[Unit, CrdtError] {
   for entry in checkpoint.maps {
     match entry.value {
@@ -368,8 +368,8 @@ pub fn Update::events(self : Update) -> Array[Event] {
 /// Return sorted clock entries paired with each replica's Lamport timestamp.
 pub fn StateVector::metadata_entries(
   self : StateVector,
-) -> Array[(String, Int, Int)] {
-  let entries : Array[(String, Int, Int)] = []
+) -> Array[(String, Int32, Int32)] {
+  let entries : Array[(String, Int32, Int32)] = []
   for replica, counter in self.clocks {
     entries.push((replica, counter, self.lamports.get(replica).unwrap_or(0)))
   }
@@ -379,7 +379,7 @@ pub fn StateVector::metadata_entries(
 
 ///|
 /// Return the greatest integrated Lamport timestamp for a replica.
-pub fn StateVector::lamport(self : StateVector, replica : String) -> Int {
+pub fn StateVector::lamport(self : StateVector, replica : String) -> Int32 {
   self.lamports.get(replica).unwrap_or(0)
 }
 
@@ -387,14 +387,14 @@ pub fn StateVector::lamport(self : StateVector, replica : String) -> Int {
 /// Construct a vector with validated contiguous clocks and Lamport metadata.
 /// Each tuple is `(replica, contiguous_counter, greatest_lamport)`.
 pub fn StateVector::from_metadata(
-  entries : Array[(String, Int, Int)],
+  entries : Array[(String, Int32, Int32)],
   checkpoint : String?,
 ) -> Result[StateVector, CrdtError] {
   if entries.length() > MAX_UPDATE_CLOCKS {
     return Err(UpdateTooLarge)
   }
-  let clocks : Map[String, Int] = {}
-  let lamports : Map[String, Int] = {}
+  let clocks : Map[String, Int32] = {}
+  let lamports : Map[String, Int32] = {}
   for (replica, counter, timestamp) in entries {
     if replica.is_empty() ||
       replica.contains("\u{0}") ||
@@ -512,8 +512,8 @@ fn validate_update_vector(vector : StateVector) -> Result[Unit, CrdtError] {
 ///|
 fn validate_update_value(
   value : Value,
-  depth : Int,
-  budget : Array[Int],
+  depth : Int32,
+  budget : Array[Int32],
 ) -> Result[Unit, CrdtError] {
   if depth > MAX_VALUE_DEPTH {
     return Err(InvalidValueDepth)
@@ -560,7 +560,7 @@ fn validate_update_value(
 fn validate_snapshot_map_entry(
   entry : MapSnapshotEntry,
   frontier : StateVector,
-  budget : Array[Int],
+  budget : Array[Int32],
 ) -> Result[Unit, CrdtError] {
   let frontier_counter = frontier.counter(entry.stamp.replica())
   let frontier_lamport = frontier.lamport(entry.stamp.replica())
@@ -595,7 +595,7 @@ fn validate_snapshot_map_entry(
 ///|
 fn validate_snapshot_sequence(
   sequence : SequenceSnapshot,
-  budget : Array[Int],
+  budget : Array[Int32],
 ) -> Result[Unit, CrdtError] {
   if sequence.root.is_empty() ||
     sequence.values.length() > MAX_UPDATE_CONTAINER_ITEMS {
@@ -644,7 +644,7 @@ fn validate_checkpoint_snapshot(
 ///|
 fn validate_update_event(
   event : Event,
-  budget : Array[Int],
+  budget : Array[Int32],
 ) -> Result[Unit, CrdtError] {
   if event.id.replica().is_empty() ||
     event.id.replica().contains("\u{0}") ||
@@ -824,19 +824,19 @@ fn clone_update_event(event : Event) -> Event {
 }
 
 ///|
-const MAX_UPDATE_CLOCKS : Int = 10000
+const MAX_UPDATE_CLOCKS : Int32 = 10000
 
 ///|
-const MAX_UPDATE_EVENTS : Int = 100000
+const MAX_UPDATE_EVENTS : Int32 = 100000
 
 ///|
-const MAX_UPDATE_CONTAINER_ITEMS : Int = 100000
+const MAX_UPDATE_CONTAINER_ITEMS : Int32 = 100000
 
 ///|
-const MAX_UPDATE_STRING_BYTES : Int = 1048576
+const MAX_UPDATE_STRING_BYTES : Int32 = 1048576
 
 ///|
-const MAX_UPDATE_VALUE_NODES : Int = 1000000
+const MAX_UPDATE_VALUE_NODES : Int32 = 1000000
 
 ///|
-const MAX_UPDATE_BYTES : Int = 16777216
+const MAX_UPDATE_BYTES : Int32 = 16777216

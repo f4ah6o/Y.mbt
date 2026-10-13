@@ -2,7 +2,7 @@
 #cfg(target="js")
 extern "js" fn run_yjs_candidate(
   scenario_json : String,
-  native_event_count : Int,
+  native_event_count : Int32,
   native_projection : String,
 ) -> String =
   #|(scenarioJson, nativeEventCount, nativeProjection) => {
@@ -161,7 +161,7 @@ fn[T] yjs_must_ok(result : Result[T, @y.CrdtError]) -> T {
 #cfg(not(target="js"))
 fn run_yjs_candidate(
   _scenario_json : String,
-  _native_event_count : Int,
+  _native_event_count : Int32,
   _native_projection : String,
 ) -> String {
   "Yjs candidate requires JavaScript"
@@ -211,7 +211,7 @@ fn apply_scenario_edits(
 
 ///|
 #cfg(target="js")
-fn compare_yjs_event_ids(left : @y.EventId, right : @y.EventId) -> Int {
+fn compare_yjs_event_ids(left : @y.EventId, right : @y.EventId) -> Int32 {
   let replica_order = left.replica().compare(right.replica())
   if replica_order != 0 {
     replica_order
@@ -222,7 +222,7 @@ fn compare_yjs_event_ids(left : @y.EventId, right : @y.EventId) -> Int {
 
 ///|
 #cfg(target="js")
-fn native_scenario_projection(scenario : @workload.Scenario) -> (Int, String) {
+fn native_scenario_projection(scenario : @workload.Scenario) -> (Int32, String) {
   let seed = yjs_must_ok(@y.Document::new("seed"))
   apply_scenario_edits(seed, scenario.seed)
   let seed_events = seed.events()
@@ -294,7 +294,7 @@ fn write_projection_value(output : StringBuilder, value : @y.Value?) -> Unit {
 
 ///|
 #cfg(target="js")
-fn run_case(seed_size : Int, edits_per_branch : Int) -> Unit {
+fn run_case(seed_size : Int32, edits_per_branch : Int32) -> Unit {
   let scenario = @workload.offline_branch_scenario(seed_size, edits_per_branch)
   let (native_event_count, native_projection) = native_scenario_projection(
     scenario,

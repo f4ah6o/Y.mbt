@@ -1,9 +1,9 @@
 ///|
 /// A logical edit in the deterministic offline-branch benchmark workload.
 pub(all) enum Edit {
-  TextInsert(Int, String)
-  TextDelete(Int, Int)
-  ListInsert(Int, Array[Int])
+  TextInsert(Int32, String)
+  TextDelete(Int32, Int32)
+  ListInsert(Int32, Array[Int32])
   MapSet(String, JsonValue)
   MapDelete(String)
 }
@@ -12,7 +12,7 @@ pub(all) enum Edit {
 /// JSON-safe map values used by the benchmark workload.
 pub(all) enum JsonValue {
   Text(String)
-  Number(Int)
+  Number(Int32)
 }
 
 ///|
@@ -21,8 +21,8 @@ pub(all) struct Scenario {
   seed : Array[Edit]
   left : Array[Edit]
   right : Array[Edit]
-  seed_size : Int
-  edits_per_branch : Int
+  seed_size : Int32
+  edits_per_branch : Int32
 }
 
 ///|
@@ -30,8 +30,8 @@ pub(all) struct Scenario {
 /// benchmark candidates. Sequence strings in this workload are ASCII so their
 /// indexes have the same meaning in the scalar-indexed core and Yjs UTF-16.
 pub fn offline_branch_scenario(
-  seed_size : Int,
-  edits_per_branch : Int,
+  seed_size : Int32,
+  edits_per_branch : Int32,
 ) -> Scenario {
   if seed_size <= 0 || edits_per_branch <= 0 {
     abort("offline benchmark sizes must be positive")
@@ -94,7 +94,7 @@ pub fn Scenario::to_json(self : Scenario) -> String {
 }
 
 ///|
-fn repeat_scalar(scalar : Char, count : Int) -> String {
+fn repeat_scalar(scalar : Char, count : Int32) -> String {
   let output = StringBuilder()
   for _ in 0..<count {
     output.write_char(scalar)

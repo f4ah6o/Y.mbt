@@ -3,10 +3,10 @@
 pub(all) enum Edit {
   MapSet(String, String, Value)
   MapDelete(String, String)
-  ListInsert(String, Int, Array[Value])
-  ListDelete(String, Int, Int)
-  TextInsert(String, Int, String)
-  TextDelete(String, Int, Int)
+  ListInsert(String, Int32, Array[Value])
+  ListDelete(String, Int32, Int32)
+  TextInsert(String, Int32, String)
+  TextDelete(String, Int32, Int32)
 } derive(Eq)
 
 ///|
@@ -88,7 +88,7 @@ pub fn Document::map_delete(
 pub fn Document::list_insert(
   self : Document,
   root : String,
-  index : Int,
+  index : Int32,
   values : Array[Value],
 ) -> Result[ChangeSet, CrdtError] {
   self.transact([ListInsert(root, index, values)])
@@ -99,8 +99,8 @@ pub fn Document::list_insert(
 pub fn Document::list_delete(
   self : Document,
   root : String,
-  index : Int,
-  length : Int,
+  index : Int32,
+  length : Int32,
 ) -> Result[ChangeSet, CrdtError] {
   self.transact([ListDelete(root, index, length)])
 }
@@ -110,7 +110,7 @@ pub fn Document::list_delete(
 pub fn Document::text_insert(
   self : Document,
   root : String,
-  index : Int,
+  index : Int32,
   text : String,
 ) -> Result[ChangeSet, CrdtError] {
   self.transact([TextInsert(root, index, text)])
@@ -121,8 +121,8 @@ pub fn Document::text_insert(
 pub fn Document::text_delete(
   self : Document,
   root : String,
-  index : Int,
-  length : Int,
+  index : Int32,
+  length : Int32,
 ) -> Result[ChangeSet, CrdtError] {
   self.transact([TextDelete(root, index, length)])
 }

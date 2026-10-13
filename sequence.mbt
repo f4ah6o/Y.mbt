@@ -68,7 +68,7 @@ fn sequence_visible_values(sequence : SequenceState) -> Array[Value] {
 }
 
 ///|
-fn sequence_anchor_at(sequence : SequenceState, index : Int) -> NodeId? {
+fn sequence_anchor_at(sequence : SequenceState, index : Int32) -> NodeId? {
   let ids = sequence_visible_ids(sequence)
   if index < 0 || index > ids.length() {
     None
@@ -107,9 +107,9 @@ fn sequence_is_descendant(
 fn sequence_position_index(
   sequence : SequenceState,
   position : RelativePosition,
-) -> Int? {
+) -> Int32? {
   let ordered = sequence_all_nodes(sequence)
-  let before = fn(boundary : Int) -> Int {
+  let before = fn(boundary : Int32) -> Int32 {
     let mut visible = 0
     for index in 0..<boundary {
       if !ordered[index].deleted {
@@ -118,7 +118,7 @@ fn sequence_position_index(
     }
     visible
   }
-  let through = fn(boundary : Int) -> Int {
+  let through = fn(boundary : Int32) -> Int32 {
     let mut visible = 0
     for index in 0..<=boundary {
       if !ordered[index].deleted {
@@ -127,7 +127,7 @@ fn sequence_position_index(
     }
     visible
   }
-  let index_of = fn(id : NodeId) -> Int? {
+  let index_of = fn(id : NodeId) -> Int32? {
     for index, node in ordered {
       if node.id == id {
         return Some(index)
@@ -173,7 +173,7 @@ pub fn Document::position_at(
   self : Document,
   root : String,
   kind : SequenceKind,
-  index : Int,
+  index : Int32,
   affinity : Affinity,
 ) -> Result[RelativePosition, CrdtError] {
   let sequence = match sequence_get(self, root, kind) {
@@ -199,7 +199,7 @@ pub fn Document::position_at(
 pub fn Document::resolve_position(
   self : Document,
   position : RelativePosition,
-) -> Result[Int, CrdtError] {
+) -> Result[Int32, CrdtError] {
   let current_checkpoint = self.checkpoint.map(checkpoint => checkpoint.id)
   if position.checkpoint != current_checkpoint {
     return Err(StalePosition)

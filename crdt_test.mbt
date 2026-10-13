@@ -1,7 +1,7 @@
 ///|
 fn test_event(
   replica : String,
-  counter : Int,
+  counter : Int32,
   deps : @y.StateVector,
   op : @y.Operation,
 ) -> @y.Event {
@@ -9,7 +9,7 @@ fn test_event(
 }
 
 ///|
-fn test_vector(entries : Array[(String, Int, Int)]) -> @y.StateVector {
+fn test_vector(entries : Array[(String, Int32, Int32)]) -> @y.StateVector {
   @y.StateVector::from_metadata(entries, None).unwrap()
 }
 
@@ -25,7 +25,7 @@ fn reverse_test_events(events : Array[@y.Event]) -> Array[@y.Event] {
 ///|
 fn shuffled_test_events(
   events : Array[@y.Event],
-  seed : Int,
+  seed : Int32,
 ) -> Array[@y.Event] {
   let output = events.copy()
   let mut state = seed

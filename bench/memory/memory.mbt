@@ -33,7 +33,7 @@ fn[T] memory_must_unit(result : Result[T, @y.CrdtError]) -> Unit {
 
 ///|
 #cfg(target="js")
-fn memory_repeat(scalar : Char, count : Int) -> String {
+fn memory_repeat(scalar : Char, count : Int32) -> String {
   let output = StringBuilder()
   for _ in 0..<count {
     output.write_char(scalar)
@@ -44,8 +44,8 @@ fn memory_repeat(scalar : Char, count : Int) -> String {
 ///|
 #cfg(target="js")
 fn memory_build_documents(
-  document_count : Int,
-  repeated_same_value_edits : Int,
+  document_count : Int32,
+  repeated_same_value_edits : Int32,
 ) -> Array[@y.Document] {
   let documents : Array[@y.Document] = []
   let edits : Array[@y.Edit] = []
@@ -76,7 +76,7 @@ fn memory_build_documents(
 
 ///|
 #cfg(target="js")
-fn memory_empty_documents(document_count : Int) -> Array[@y.Document] {
+fn memory_empty_documents(document_count : Int32) -> Array[@y.Document] {
   let documents : Array[@y.Document] = []
   for index in 0..<document_count {
     documents.push(memory_must_ok(@y.Document::new("empty-heap-\{index}")))
@@ -87,8 +87,8 @@ fn memory_empty_documents(document_count : Int) -> Array[@y.Document] {
 ///|
 #cfg(target="js")
 fn memory_build_live_size_documents(
-  document_count : Int,
-  sequence_size : Int,
+  document_count : Int32,
+  sequence_size : Int32,
 ) -> Array[@y.Document] {
   let documents : Array[@y.Document] = []
   let text = memory_repeat('x', sequence_size)
@@ -111,9 +111,9 @@ fn memory_build_live_size_documents(
 #cfg(target="js")
 fn memory_validate_live_size(
   documents : Array[@y.Document],
-  sequence_size : Int,
+  sequence_size : Int32,
   compacted : Bool,
-) -> Int {
+) -> Int32 {
   let mut checked = 0
   for document in documents {
     let counts = document.storage_counts()
@@ -133,7 +133,7 @@ fn memory_validate_live_size(
 
 ///|
 #cfg(target="js")
-fn memory_measure_live_size(sequence_size : Int, trial : Int) -> Unit {
+fn memory_measure_live_size(sequence_size : Int32, trial : Int32) -> Unit {
   let document_count = 8
   let live_elements_per_document = 2 * sequence_size
   let empty_documents = memory_empty_documents(document_count)
@@ -177,7 +177,7 @@ fn memory_measure_live_size(sequence_size : Int, trial : Int) -> Unit {
 
 ///|
 #cfg(target="js")
-fn memory_warm_live_size(sequence_size : Int) -> Unit {
+fn memory_warm_live_size(sequence_size : Int32) -> Unit {
   let documents = memory_build_live_size_documents(2, sequence_size)
   for document in documents {
     ignore(memory_must_ok(document.compact("live-size-warmup")))
@@ -188,9 +188,9 @@ fn memory_warm_live_size(sequence_size : Int) -> Unit {
 ///|
 #cfg(target="js")
 fn memory_measure_history(
-  repeated_same_value_edits : Int,
-  document_count : Int,
-  trial : Int,
+  repeated_same_value_edits : Int32,
+  document_count : Int32,
+  trial : Int32,
 ) -> Unit {
   force_full_gc()
   let before_heap = js_heap_used_bytes()

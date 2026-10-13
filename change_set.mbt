@@ -161,7 +161,7 @@ fn notify_observers(document : Document, changes : ChangeSet) -> Unit {
 pub fn Document::observe(
   self : Document,
   callback : (ChangeSet) -> Unit,
-) -> Int {
+) -> Int32 {
   let id = self.next_observer_id
   if id >= 2147483647 {
     return -1
@@ -173,7 +173,7 @@ pub fn Document::observe(
 
 ///|
 /// Remove an observer by its registration identifier.
-pub fn Document::unobserve(self : Document, id : Int) -> Bool {
+pub fn Document::unobserve(self : Document, id : Int32) -> Bool {
   let mut index = 0
   while index < self.observers.length() {
     if self.observers[index].id == id {

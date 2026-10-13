@@ -26,7 +26,7 @@ fn latency_seed_document(replica : String) -> @y.Document {
 }
 
 ///|
-fn latency_sample(operation : String, sample_id : Int) -> Double {
+fn latency_sample(operation : String, sample_id : Int32) -> Double {
   let replica = "latency-\{operation}-\{sample_id}"
   let document = latency_seed_document(replica)
   let started = @bench.monotonic_clock_start()
